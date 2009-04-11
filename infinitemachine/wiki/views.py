@@ -41,15 +41,24 @@ def index(request, docname):
 
 
 def handler404(request):
+  authors = [x[0] for x in settings.MANAGERS]
   path_info = request.META['PATH_INFO']
-  rendered = django.template.loader.render_to_string('404.html',
-                                                     {'page_title': '404'})
+  values = {'path_info': path_info,
+            'settings': settings,
+            'site_title': getattr(settings, 'SITE_TITLE', ''),
+            'author': ', '.join(authors)}
+  rendered = django.template.loader.render_to_string('404.html', values)
   response = django.http.HttpResponse(rendered, status=404)
   return response
 
 
 def handler500(request):
-  rendered = django.template.loader.render_to_string('404.html',
-                                                     {'page_title': '500'})
-  response = django.http.HttpResponse(rendered, status=404)
+  authors = [x[0] for x in settings.MANAGERS]
+  path_info = request.META['PATH_INFO']
+  values = {'path_info': path_info,
+            'settings': settings,
+            'site_title': getattr(settings, 'SITE_TITLE', ''),
+            'author': ', '.join(authors)}
+  rendered = django.template.loader.render_to_string('500.html', values)
+  response = django.http.HttpResponse(rendered, status=500)
   return response
