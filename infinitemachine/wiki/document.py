@@ -582,7 +582,9 @@ class Document(object):
   def __init__(self, docname, fsdoc=None):
     if fsdoc:
       self._fs_doc = fsdoc
+      self._docname = fsdoc.docname()
     else:
+      self._docname = docname
       self._fs_doc = fs.document(docname)
       if not self._fs_doc:
         return
@@ -615,7 +617,7 @@ class Document(object):
     return getattr(self, '_exists', False)
 
   def docname(self):
-    return self._fs_doc.docname()
+    return self._docname
 
   def title(self):
     if not self.exists():
@@ -623,10 +625,10 @@ class Document(object):
 
     # check local structure first
     if self._structure:
-      return self._structure.title or os.path.basename(self.docname())
+      return self._structure.title or os.path.basename(self._docname)
 
     # try cache
-    key = 'im_doc_title_%s' % sha.new(self.docname()).hexdigest()
+    key = 'im_doc_title_%s' % sha.new(self._docname).hexdigest()
     title_str = cache.get(key)
     if title_str is not None:
       return title_str
@@ -634,7 +636,7 @@ class Document(object):
     # title is not locally or in cache, parse and cache
     self._parse()
     self._cache_title()
-    return self._structure.title or os.path.basename(self.docname())
+    return self._structure.title or os.path.basename(self._docname)
 
   def to_html(self):
     if not self._document or not self._structure:
@@ -655,8 +657,9 @@ class Document(object):
 
   def breadcrumbs(self):
     bc = []
-    bc_split = self.docname().split('/')
+    bc_split = self._docname.split('/')
     for i, segment in enumerate(bc_split):
       sub_dn = '/'.join(bc_split[0:(i+1)])
-      bc.append((sub_dn, self.__class__(sub_dn).title()))
+      bc_elem = (sub_dn, self.__class__(sub_dn).title())
+      bc.append(bc_elem)
     return bc
