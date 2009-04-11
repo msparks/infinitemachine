@@ -108,7 +108,7 @@ class Filesystem(object):
 
 class GitFilesystem(Filesystem):
   def document(self, docname):
-    return _blob(docname) and Document(self, docname) or None
+    return self._blob(docname) and Document(self, docname) or None
 
   def tree(self, root=None):
     try:
