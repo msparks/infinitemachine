@@ -162,8 +162,6 @@ class LinkNode(object):
       self._inside = html_escape(self._target)
       self._inside_empty = True
 
-    print self._target
-
     m = ADDR_RE.match(self._target)
     # external links (http://...)
     if m and m.group('extern_addr'):
