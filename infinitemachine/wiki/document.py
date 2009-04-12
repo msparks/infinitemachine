@@ -510,7 +510,10 @@ class TOC(object):
       raise TypeError
 
   def to_html(self, cut_root_node=True):
-    toc = cut_root_node and self._cut_root_node() or self._toc
+    if cut_root_node:
+      toc = self._cut_root_node()
+    else:
+      toc = self._toc
     if toc == self._toc:
       cut_root_node = False
     return self._to_html_rec(toc, level_adjust=cut_root_node)
@@ -532,7 +535,10 @@ class TOC(object):
           s += _rec_size(item)
       return s
 
-    toc = cut_root_node and self._cut_root_node() or self._toc
+    if cut_root_node:
+      toc = self._cut_root_node()
+    else:
+      toc = self._toc
     return _rec_size(toc)
 
 
