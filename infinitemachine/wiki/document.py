@@ -459,6 +459,17 @@ class TOC(object):
     self._cur = self._toc
     self._level_stack = [self._toc]
 
+  def _cut_root_node(self):
+    '''Get the TOC tree without the root node, if one exists.
+
+    Returns:
+      NodeList or None
+    '''
+    if len(self._toc) == 1 and type(self._toc[0]) == self.Node:
+      return self._toc[0].children
+    else:
+      return self._toc
+
   def add_header(self, level, title):
     if level == len(self._level_stack):
       node = self.Node(level, title)
@@ -499,12 +510,30 @@ class TOC(object):
       raise TypeError
 
   def to_html(self, cut_root_node=True):
-    if (cut_root_node and len(self._toc) == 1 and
-        type(self._toc[0]) == self.Node):
-      self._toc = self._toc[0].children
-    else:
+    toc = cut_root_node and self._cut_root_node() or self._toc
+    if toc == self._toc:
       cut_root_node = False
-    return self._to_html_rec(self._toc, level_adjust=cut_root_node)
+    return self._to_html_rec(toc, level_adjust=cut_root_node)
+
+  def size(self, cut_root_node=True):
+    '''Get the number of items and subitems in the table of contents.
+
+    Returns:
+      integer
+    '''
+    def _rec_size(node_list):
+      s = 0
+      if not node_list:
+        return 0
+      for item in node_list:
+        if type(item) == self.Node:
+          s += 1 + _rec_size(item.children)
+        elif type(item) == self.NodeList:
+          s += _rec_size(item)
+      return s
+
+    toc = cut_root_node and self._cut_root_node() or self._toc
+    return _rec_size(toc)
 
 
 class StructureExtractor(object):

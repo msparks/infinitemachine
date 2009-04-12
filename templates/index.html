@@ -8,7 +8,7 @@
     <div class="content">
       <h1><a name="{{ title_shortname }}">{{ title }}</a></h1>
 {% autoescape off %}{{ document.summary }}{% endautoescape %}
-{% if document.toc.to_html %}
+{% if document.toc.size %}
       <div class="toc">
 {% autoescape off %}{{ document.toc.to_html }}{% endautoescape %}
       </div>
