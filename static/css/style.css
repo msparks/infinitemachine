@@ -166,7 +166,7 @@ h6 a {
 
 pre {
   margin: 1em;
-  padding: 0.5em;
+  padding: 0.5em 0.5em 0.5em 1em;
   border: 2px solid #ccc;
   background-color: #f0f0f0;
   font-size: 115%;
@@ -292,6 +292,33 @@ table tr:last-child td:last-child {
   -moz-border-radius: 0 0 14px 0;
   -khtml-border-radius: 0 0 14px 0;
   border-radius: 0 0 14px 0;
+}
+
+/* pygments */
+table.syntaxtable {
+  border: 2px solid #ccc;
+  background-color: #f0f0f0;
+  -moz-border-radius: 14px;
+  -khtml-border-radius: 14px;
+  border-radius: 14px;
+}
+
+table.syntaxtable pre {
+  border: 0;
+  margin: 0;
+  padding: 0.25em 0.25em 0.25em 0.5em;
+}
+
+table.syntaxtable tr td {
+  background: none;
+  -moz-border-radius: 0;
+  -khtml-border-radius: 0;
+  border-radius: 0;
+}
+
+div.syntax {
+  background: none;
+  margin-left: -1.5em;
 }
 
 td {
