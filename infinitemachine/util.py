@@ -4,6 +4,8 @@ import time
 
 from django.core.cache import cache
 
+from infinitemachine import settings
+
 
 def log_elapsed(func):
   def x(*args, **kwargs):
@@ -28,7 +30,8 @@ def cached(func):
   def x(*args, **kwargs):
     args_list = list(args) + list(kwargs)
     args_hash = sha.new(str(args_list)).hexdigest()
-    key = 'im_func_%s_%s' % (func.__name__, args_hash)
+    sitekey = sha.new(settings.SECRET_KEY).hexdigest()[0:16]
+    key = 'im_%s_func_%s_%s' % (sitekey, func.__name__, args_hash)
     value = cache.get(key)
     if not value:
       value = func(*args, **kwargs)

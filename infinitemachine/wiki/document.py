@@ -631,7 +631,8 @@ class Document(object):
     return repr(self._fs_doc)
 
   def _cache_title(self):
-    key = 'im_doc_title_%s' % sha.new(self.docname()).hexdigest()
+    sitekey = sha.new(settings.SECRET_KEY).hexdigest()[0:16]
+    key = 'im_%s_doc_title_%s' % (sitekey, sha.new(self.docname()).hexdigest())
     cache.set(key, self._structure.title)
 
   def _parse(self):
