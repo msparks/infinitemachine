@@ -173,6 +173,9 @@ class GitFilesystem(Filesystem):
     tree = self._tree_root(head.commit.tree, os.path.dirname(docname))
     if tree is None:
       return None
+
+    if docname == '':
+      docname = 'index'
     basename = os.path.basename(docname)
 
     if '%s.txt' % basename in tree:
