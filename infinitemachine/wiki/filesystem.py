@@ -170,15 +170,14 @@ class GitFilesystem(Filesystem):
     except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
       return None
 
+    if docname == '':
+      docname = 'index'
     docname = os.path.normpath(docname)
+    basename = os.path.basename(docname)
     head = repo.heads[0]
     tree = self._tree_root(head.commit.tree, os.path.dirname(docname))
     if tree is None:
       return None
-
-    if docname == '':
-      docname = 'index'
-    basename = os.path.basename(docname)
 
     if '%s.txt' % basename in tree:
       blob = tree['%s.txt' % basename]
