@@ -96,6 +96,7 @@ class Filesystem(object):
     Returns:
       filesystem path string or None
     '''
+    docname = os.path.normpath(docname)
     filename = os.path.join(settings.CONTENT_DIR, docname)
     if os.path.exists('%s.txt' % filename):
       filename = '%s.txt' % filename
@@ -169,6 +170,7 @@ class GitFilesystem(Filesystem):
     except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
       return None
 
+    docname = os.path.normpath(docname)
     head = repo.heads[0]
     tree = self._tree_root(head.commit.tree, os.path.dirname(docname))
     if tree is None:
