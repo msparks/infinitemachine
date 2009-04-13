@@ -19,6 +19,10 @@ def _render(docname, template=None):
   if not doc.exists():
     raise django.http.Http404
 
+  if not settings.DEBUG:
+    analytics_id = getattr(settings, 'ANALYTICS_ID', None)
+  else:
+    analytics_id = None
   authors = [x[0] for x in settings.MANAGERS]
   values = {'document': doc,
             'toplevel': docname.split('/')[0],
@@ -26,7 +30,8 @@ def _render(docname, template=None):
             'title': doc.title(),
             'title_shortname': document.header_short_name(doc.title()),
             'site_title': getattr(settings, 'SITE_TITLE', ''),
-            'author': ', '.join(authors)}
+            'author': ', '.join(authors),
+            'analytics_id': analytics_id}
 
   rendered = django.template.loader.render_to_string(template, values)
   return rendered
