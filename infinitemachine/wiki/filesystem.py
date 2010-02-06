@@ -60,7 +60,7 @@ class Filesystem(object):
         sub_tree = self.tree(os.path.join(root, filename))
         if sub_tree:
           tr[filename] = sub_tree
-    return tr
+    return Tree(tr)
 
   def _document_path(self, docname):
     '''Get the filesystem path for a given document name.
