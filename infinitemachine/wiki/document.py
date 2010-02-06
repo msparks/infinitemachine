@@ -722,6 +722,8 @@ class Document(object):
     bc = []
     bc_split = self._docname.split('/')
     for i, segment in enumerate(bc_split):
+      if segment == 'index':
+        break
       sub_dn = '/'.join(bc_split[0:(i+1)])
       bc_elem = (sub_dn, self.__class__(sub_dn).title())
       bc.append(bc_elem)
