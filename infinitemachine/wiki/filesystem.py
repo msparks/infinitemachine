@@ -4,36 +4,6 @@ import time
 
 import git
 
-from infinitemachine import settings
-from infinitemachine import util
-
-
-def document_url(docname):
-  '''Get the web-accessible URL for a given document name.
-
-  Args:
-    docname: wiki path to document
-
-  Returns:
-    web-accessible URL string
-  '''
-  return os.path.join('/', docname)
-
-
-def source_url(docname):
-  '''Get the web-accessible URL for a given document or image.
-
-  This is used to create the URL for a direct link to a file from within an
-  article (such as an image), which is part of the content.
-
-  Args:
-    docname: wiki path to the document or file
-
-  Returns:
-    web-accessible URL string
-  '''
-  return os.path.join(settings.CONTENT_URL, docname)
-
 
 class Document(object):
   '''Class representing a wiki document on a filesystem.'''
@@ -56,6 +26,12 @@ class Tree(dict):
 
 
 class Filesystem(object):
+  def __init__(self, root=None):
+    self._root = root
+
+  def root(self):
+    return self._root
+
   def document(self, docname):
     return self._document_path(docname) and Document(self, docname) or None
 
@@ -70,14 +46,13 @@ class Filesystem(object):
 
   def tree(self, root=None):
     if root is None:
-      root = '.'
-    path = os.path.join(settings.CONTENT_DIR, root)
-    if not os.path.isdir(path):
+      root = self._root
+    if not os.path.isdir(root):
       return None
 
     tr = {}
-    for filename in os.listdir(path):
-      filepath = os.path.join(path, filename)
+    for filename in os.listdir(root):
+      filepath = os.path.join(root, filename)
       if os.path.isfile(filepath) and filepath.endswith('.txt'):
         docname = os.path.normpath(os.path.join(root, filename))
         tr[filename[:-4]] = Document(self, docname[:-4])
@@ -97,7 +72,8 @@ class Filesystem(object):
       filesystem path string or None
     '''
     docname = os.path.normpath(docname)
-    filename = os.path.join(settings.CONTENT_DIR, docname)
+    filename = os.path.join(self._root, docname)
+
     if os.path.exists('%s.txt' % filename):
       filename = '%s.txt' % filename
     elif os.path.isdir(filename) and os.path.exists('%s/index.txt' % filename):
@@ -113,18 +89,17 @@ class GitFilesystem(Filesystem):
 
   def tree(self, root=None):
     try:
-      repo = git.Repo(settings.CONTENT_DIR)
+      repo = git.Repo(self.root())
     except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
       return None
 
-    if root is None:
-      root = '.'
+    start_path = '.'
 
     head = repo.heads[0]
-    git_tree = self._tree_root(head.commit.tree, root)
+    git_tree = self._tree_root(head.commit.tree, start_path)
     if git_tree is None:
       return None
-    return self._tree(root, root, git_tree)
+    return self._tree(start_path, start_path, git_tree)
 
   def _tree(self, base_docname, docname, tree_root):
     docname = os.path.normpath(os.path.join(base_docname, docname))
@@ -166,7 +141,7 @@ class GitFilesystem(Filesystem):
       Blob or None
     '''
     try:
-      repo = git.Repo(settings.CONTENT_DIR)
+      repo = git.Repo(self.root())
     except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
       return None
 

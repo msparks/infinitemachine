@@ -17,9 +17,36 @@ from infinitemachine.wiki import filesystem
 
 # Global handle to the filesystem
 if getattr(settings, 'USE_FILESYSTEM', False):
-  fs = filesystem.Filesystem()
+  fs = filesystem.Filesystem(settings.CONTENT_DIR)
 else:
-  fs = filesystem.GitFilesystem()
+  fs = filesystem.GitFilesystem(settings.CONTENT_DIR)
+
+
+def document_url(docname):
+  '''Get the web-accessible URL for a given document name.
+
+  Args:
+    docname: wiki path to document
+
+  Returns:
+    web-accessible URL string
+  '''
+  return os.path.join('/', docname)
+
+
+def source_url(docname):
+  '''Get the web-accessible URL for a given document or image.
+
+  This is used to create the URL for a direct link to a file from within an
+  article (such as an image), which is part of the content.
+
+  Args:
+    docname: wiki path to the document or file
+
+  Returns:
+    web-accessible URL string
+  '''
+  return os.path.join(settings.CONTENT_URL, docname)
 
 
 def html_escape(text):
@@ -171,7 +198,7 @@ class LinkNode(object):
     elif m and m.group('intern_addr'):
       if self._inside_empty and fs.document(self._target):
         self._inside = Document(self._target).title()
-      self._link = Link(filesystem.document_url(self._target),
+      self._link = Link(document_url(self._target),
                         self._inside, css_class='urli')
     # interwiki links ([[wp>Python]])
     elif m and m.group('inter_wiki'):
@@ -389,12 +416,12 @@ class HtmlEmitter(object):
         if width_str:
           return (u'<a href="%s" class="lightbox">'
                   '<img src="%s"%s%s alt="%s" /></a>' %
-                  (filesystem.source_url(attr_escape(target)),
-                   filesystem.source_url(attr_escape(target)),
+                  (source_url(attr_escape(target)),
+                   source_url(attr_escape(target)),
                    class_str, width_str, attr_escape(text)))
         else:
           return (u'<img src="%s"%s alt="%s" />' %
-                  (filesystem.source_url(attr_escape(target)),
+                  (source_url(attr_escape(target)),
                    class_str, attr_escape(text)))
       elif m.group('inter_wiki'):
         raise NotImplementedError
