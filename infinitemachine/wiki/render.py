@@ -1,3 +1,5 @@
+import os
+
 import django.template.loader
 
 from infinitemachine import settings
@@ -33,9 +35,14 @@ def render(docname, template=None):
   return rendered
 
 
-def cachedRender(docname, template=None, force=False):
+def cachedRender(docname, template=None, timeout=0, force=False):
   rendered = cache.get(docname)
   if force or rendered is None:
     rendered = render(docname, template)
-    cache.set(docname, rendered)
+    cache.set(docname, rendered, timeout=timeout)
+
+    dir, base = os.path.split(docname)
+    if base == 'index':
+      cache.set(dir, rendered, timeout=timeout)
+
   return rendered
