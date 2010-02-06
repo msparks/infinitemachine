@@ -33,9 +33,9 @@ def render(docname, template=None):
   return rendered
 
 
-def cachedRender(docname, template=None):
+def cachedRender(docname, template=None, force=False):
   rendered = cache.get(docname)
-  if rendered is None:
+  if force or rendered is None:
     rendered = render(docname, template)
     cache.set(docname, rendered)
   return rendered
