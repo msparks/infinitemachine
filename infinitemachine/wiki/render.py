@@ -1,4 +1,5 @@
 import os
+import time
 
 import django.template.loader
 
@@ -35,7 +36,11 @@ def render(docname, template=None):
   return rendered
 
 
-def cachedRender(docname, template=None, timeout=0, force=False):
+def cachedRender(docname, template=None, timeout=None, force=False):
+  if timeout is None:
+    # cache for 5 years (infinitely)
+    timeout = int(time.time() + 3600 * 24 * 365 * 5)
+
   rendered = cache.get(docname)
   if force or rendered is None:
     rendered = render(docname, template)
