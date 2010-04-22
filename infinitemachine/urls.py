@@ -12,7 +12,5 @@ urlpatterns = patterns('',
    'django.views.static.serve',
    {'document_root': settings.STATIC_DIR}),
 
-  (r'^blog/?', include('infinitemachine.blog.urls')),
   (r'', include('infinitemachine.wiki.urls')),
 )
-
