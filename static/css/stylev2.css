@@ -1,7 +1,6 @@
 body {
-  font-family: Arial;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
   background: #323232 url(../images/bg.png) repeat-y center 0px;
   color: #666;
 }
@@ -10,17 +9,17 @@ body {
 /* Header */
 .header {
   background: #999999 url(../images/light.png) no-repeat 50% 0px;
-  height: 325px;
+  height: 300px;
 }
 
 .inf {
-  background: url(../images/inf.png) no-repeat 10px 35px;
+  background: url(../images/inf.png) no-repeat 10px 10px;
   height: 350px;
 }
 
 .qp {
-  background: url(../images/qp.org.png) no-repeat 20px 75px;
-  height: 300px;
+  background: url(../images/qp.org.png) no-repeat 20px 50px;
+  height: 250px;
 }
 
 .hs {
@@ -166,7 +165,7 @@ a.iw_g {
 
 /* levels */
 .lvl1 { margin-left: 0px; }
-.lvl2 { margin-left: 0px; }
+.lvl2 { margin-left: 10px; }
 .lvl3 { margin-left: 20px; }
 .lvl4 { margin-left: 20px; }
 .lvl5 { margin-left: 20px; }
@@ -256,7 +255,7 @@ code, tt {
 
 p {
   text-align: justify;
-  text-shadow: rgba(102, 102, 102, 0.5) 0px 1px 1px;
+  /*text-shadow: rgba(102, 102, 102, 0.5) 0px 1px 1px;*/
 }
 
 /* embedded images */
