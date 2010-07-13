@@ -21,6 +21,15 @@ class Document(object):
     return self._docname
 
 
+class GitDocument(Document):
+  def __init__(self, docname, blob):
+    self._docname = docname
+    self._blob = blob
+
+  def content(self):
+    return self._blob.data
+
+
 class Tree(dict):
   pass
 
@@ -93,72 +102,32 @@ class GitFilesystem(Filesystem):
     except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
       return None
 
-    start_path = '.'
-
     head = repo.heads[0]
-    git_tree = self._tree_root(head.commit.tree, start_path)
-    if git_tree is None:
-      return None
-    return self._tree(start_path, start_path, git_tree)
+    return self._tree(repo.tree(head))
 
-  def _tree(self, base_docname, docname, tree_root):
-    docname = os.path.normpath(os.path.join(base_docname, docname))
-    if type(tree_root) == git.Blob:
-      return docname.endswith('.txt') and Document(self, docname[:-4]) or None
-    else:  # type(tree_root) == git.Tree:
+  def _tree(self, obj):
+    if obj.type == 'blob':
+      docname = obj.path
+      return docname.endswith('.txt') and GitDocument(docname[:-4], obj) or None
+    elif obj.type == 'tree':
       tr = {}
-      for name, root in tree_root.items():
-        sub_tree = self._tree(docname, name, root)
-        if sub_tree and type(sub_tree) == Document:
-          tr[name[:-4]] = sub_tree
-        elif sub_tree:
-          tr[name] = sub_tree
-      return Tree(tr)
+      subobjs = obj.trees
+      subobjs.extend(obj.blobs)
+      for subobj in subobjs:
+        basename = os.path.basename(subobj.path)
+        if subobj.type == 'blob' and basename.endswith('.txt'):
+          basename = basename[:-4]
+        subtree = self._tree(subobj)
+        if subtree is not None:
+          tr[basename] = self._tree(subobj)
+      return tr
 
   def content(self, docname):
-    blob = self._blob(docname)
-    if not blob:
-      return None
-    return blob.data
-
-  def _tree_root(self, tree, root_path):
-    if root_path == '.' or not root_path:
-      return tree
-    dirs = root_path.split('/')
-    for dirname in dirs:
-      if type(tree) != git.Tree or dirname not in tree:
+    pieces = os.path.normpath(docname).split('/')
+    tr = self.tree()
+    while tr is not None and len(pieces) > 0:
+      if pieces[0] not in tr:
         return None
-      tree = tree[dirname]
-    return tree
-
-  def _blob(self, docname):
-    '''Get a Blob object for a given docname.
-
-    Args:
-      docname: document name
-
-    Returns:
-      Blob or None
-    '''
-    try:
-      repo = git.Repo(self.root())
-    except (git.errors.InvalidGitRepositoryError, git.errors.NoSuchPathError):
-      return None
-
-    if docname == '':
-      docname = 'index'
-    docname = os.path.normpath(docname)
-    basename = os.path.basename(docname)
-    head = repo.heads[0]
-    tree = self._tree_root(head.commit.tree, os.path.dirname(docname))
-    if tree is None:
-      return None
-
-    if '%s.txt' % basename in tree:
-      blob = tree['%s.txt' % basename]
-    elif basename in tree and 'index.txt' in tree[basename]:
-      blob = tree[basename]['index.txt']
-    else:
-      blob = None
-
-    return blob
+      tr = tr[pieces.pop(0)]
+      if type(tr) == GitDocument:
+        return tr.content()
