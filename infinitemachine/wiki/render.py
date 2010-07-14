@@ -1,6 +1,7 @@
 import os
 import time
 
+import django.http
 import django.template.loader
 
 from infinitemachine import settings
