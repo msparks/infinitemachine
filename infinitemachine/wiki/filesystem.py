@@ -122,7 +122,7 @@ class GitFilesystem(Filesystem):
           tr[basename] = self._tree(subobj)
       return tr
 
-  def content(self, docname):
+  def _blob(self, docname):
     pieces = os.path.normpath(docname).split('/')
     tr = self.tree()
     while tr is not None and len(pieces) > 0:
@@ -130,4 +130,9 @@ class GitFilesystem(Filesystem):
         return None
       tr = tr[pieces.pop(0)]
       if type(tr) == GitDocument:
-        return tr.content()
+        return tr
+    return None
+
+  def content(self, docname):
+    blob = self._blob(docname)
+    return blob.content()
