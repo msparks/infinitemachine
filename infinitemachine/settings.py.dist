@@ -110,3 +110,11 @@ HEADER_LINKS = [('', 'home'),
 
 # Google analytics ID (UA-xxxxxx-x)
 ANALYTICS_ID = "UA-4064625-2"
+
+# Persistent cache storage location
+# Must be readable by web server and writable by recache.py.
+PCACHE_DIR = '/home/ms/temp/pcache'
+
+# Extension to append to all persistent cache files.
+# For serving pcache files directly with a web server, '.html' is useful here.
+PCACHE_EXT = '.html'
