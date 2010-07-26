@@ -1,10 +1,52 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
+import optparse
 import os
 import sys
 
+import SimpleHTTPServer
+import SocketServer
+
+
+DEFAULT_SERVER_PORT = 9000
+
+
+def sitePath():
+  base = os.path.dirname(sys.argv[0])
+  siteDir = os.path.join(base, '_site')
+  if os.path.isdir(siteDir):
+    return siteDir
+  return None
+
+
+def startServer(address):
+  handlerClass = SimpleHTTPServer.SimpleHTTPRequestHandler
+  httpd = SocketServer.TCPServer(address, handlerClass)
+  path = sitePath()
+  if path is None:
+    return None  # No serving path
+  os.chdir(path)
+
+  print 'HTTP server at http://%s:%d' % address
+  httpd.serve_forever()
+
+
+def parseArgs():
+  parser = optparse.OptionParser()
+  parser.add_option('-p', '--port', dest='port',
+                    default=DEFAULT_SERVER_PORT, metavar='PORT',
+                    help='port number to use for webserver')
+  parser.add_option('-s', '--server', dest='server', action='store_true',
+                    default=False,
+                    help='enable webserver')
+  return parser.parse_args()
+
 
 def main():
-  pass
+  (options, args) = parseArgs()
+
+  if options.server:
+    address = ('localhost', options.port)
+    startServer(address)
 
 
 if __name__ == '__main__':
