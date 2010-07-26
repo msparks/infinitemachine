@@ -31,7 +31,7 @@ class GitDocument(Document):
 
 
 class Tree(dict):
-  pass
+   pass
 
 
 class Filesystem(object):
@@ -59,7 +59,7 @@ class Filesystem(object):
     if not os.path.isdir(root):
       return None
 
-    tr = {}
+    tr = Tree()
     for filename in os.listdir(root):
       filepath = os.path.join(root, filename)
       if os.path.isfile(filepath) and filepath.endswith('.txt'):
@@ -69,7 +69,7 @@ class Filesystem(object):
         sub_tree = self.tree(os.path.join(root, filename))
         if sub_tree:
           tr[filename] = sub_tree
-    return Tree(tr)
+    return tr
 
   def _document_path(self, docname):
     '''Get the filesystem path for a given document name.
@@ -94,7 +94,22 @@ class Filesystem(object):
 
 class GitFilesystem(Filesystem):
   def document(self, docname):
-    return self._blob(docname) and Document(self, docname) or None
+    pieces = os.path.normpath(docname).split('/')
+    tr = self.tree()
+    while tr is not None and len(pieces) > 0:
+      if pieces[0] not in tr:
+        return None
+      tr = tr[pieces.pop(0)]
+      if isinstance(tr, GitDocument):
+        return tr
+
+    # no pieces left, try index if we're at a directory
+    if isinstance(tr, Tree) and 'index' in tr:
+      obj = tr['index']
+      if isinstance(obj, GitDocument):
+        return obj
+
+    return None
 
   def tree(self, root=None):
     try:
@@ -110,7 +125,7 @@ class GitFilesystem(Filesystem):
       docname = obj.path
       return docname.endswith('.txt') and GitDocument(docname[:-4], obj) or None
     elif obj.type == 'tree':
-      tr = {}
+      tr = Tree()
       subobjs = obj.trees
       subobjs.extend(obj.blobs)
       for subobj in subobjs:
@@ -123,11 +138,5 @@ class GitFilesystem(Filesystem):
       return tr
 
   def content(self, docname):
-    pieces = os.path.normpath(docname).split('/')
-    tr = self.tree()
-    while tr is not None and len(pieces) > 0:
-      if pieces[0] not in tr:
-        return None
-      tr = tr[pieces.pop(0)]
-      if type(tr) == GitDocument:
-        return tr.content()
+    doc = self.document(docname)
+    return doc is not None and doc.content() or None
