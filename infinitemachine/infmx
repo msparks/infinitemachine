@@ -6,13 +6,33 @@ import sys
 import SimpleHTTPServer
 import SocketServer
 
+import yaml
+
 
 DEFAULT_SERVER_PORT = 9000
 
 
+def loadConfig(filename):
+  if not os.path.isfile(filename):
+    config = {}
+  else:
+    stream = file(filename, 'r')
+    config = yaml.load(stream)
+  populateDefaults(config)
+  return config
+
+
+def populateDefaults(config):
+  if 'source' not in config:
+    config['source'] = '.'
+  if 'destination' not in config:
+    config['destination'] = '_site'
+  if 'server_port' not in config:
+    config['server_port'] = DEFAULT_SERVER_PORT
+
+
 def sitePath():
-  base = os.path.dirname(sys.argv[0])
-  siteDir = os.path.join(base, '_site')
+  siteDir = '_site'
   if os.path.isdir(siteDir):
     return siteDir
   return None
@@ -31,6 +51,7 @@ def startServer(address):
 
 
 def parseArgs():
+  usage = 'usage: %prog [options]'
   parser = optparse.OptionParser()
   parser.add_option('-p', '--port', dest='port',
                     default=DEFAULT_SERVER_PORT, metavar='PORT',
@@ -38,11 +59,41 @@ def parseArgs():
   parser.add_option('-s', '--server', dest='server', action='store_true',
                     default=False,
                     help='enable webserver')
-  return parser.parse_args()
+
+  (options, args) = parser.parse_args()
+
+  # args syntax: [source] [dest] OR [dest]
+  if len(args) > 2:
+    parser.print_usage()
+    sys.exit(1)
+
+  return (options, args)
 
 
 def main():
+  # Parse arguments
   (options, args) = parseArgs()
+  if len(args) == 2:
+    source = args[0]
+  else:
+    source = '.'
+
+  # Load configuration file
+  configPath = os.path.join(source, '_config.yml')
+  try:
+    config = loadConfig(configPath)
+  except yaml.scanner.ScannerError, e:
+    print 'Error occurred while parsing config:\n%s' % str(e)
+    sys.exit(1)
+
+  # Override config settings with commandline arguments as necessary
+  if len(args) == 1:
+    config['destination'] = args[0]
+  elif len(args) == 2:
+    config['source'] = args[0]
+    config['destination'] = args[1]
+
+  print config
 
   if options.server:
     address = ('localhost', options.port)
