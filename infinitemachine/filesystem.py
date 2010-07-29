@@ -76,7 +76,7 @@ class Filesystem(object):
       filesystem path string or None
     '''
     name = os.path.normpath(name)
-    filename = os.path.join(self._root, docname)
+    filename = os.path.join(self._root, name)
 
     if os.path.exists('%s.txt' % filename):
       filename = '%s.txt' % filename

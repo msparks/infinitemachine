@@ -86,26 +86,7 @@ def parseArgs():
   return (options, args)
 
 
-def _foreachItemInTree(tree, root, func, *args):
-  if root is None:
-    root = ''
-
-  for key in sorted(tree):
-    path = os.path.join(root, key)
-    value = tree[key]
-
-    if type(value) == filesystem.Tree:
-      _foreachItemInTree(value, path, func, *args)
-    else:
-      func(value, *args)
-
-
-def callForeachDocument(tree, func, *args):
-  _foreachItemInTree(tree, None, func, *args)
-
-
-def writeStaticDocument(fsdoc, dest):
-  doc = document.Document(fsdoc)
+def writeStaticDocument(doc, dest):
   docname = doc.name()
   start = time.time()
 
@@ -147,9 +128,12 @@ def writeStaticDocument(fsdoc, dest):
 
 def build(source, dest):
   fs = filesystem.Filesystem(source)
-  tree = fs.tree()
+  ds = document.DocumentSet(fs)
 
-  callForeachDocument(tree, writeStaticDocument, dest)
+  names = ds.list()
+  for name in names:
+    doc = ds.document(name)
+    writeStaticDocument(doc, dest)
 
 
 def main():

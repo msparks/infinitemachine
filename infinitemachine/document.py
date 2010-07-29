@@ -163,12 +163,14 @@ class InterwikiLinker(object):
 
 
 class LinkNode(object):
-  def __init__(self, node, inside=None):
+  def __init__(self, ds, node, inside=None):
     '''Link node object.
 
     Args:
+      ds: DocumentSet
       node: DocNode for a link
     '''
+    self._ds = ds
     self._node = node
     self._target = node.content
     self._inside = inside
@@ -186,7 +188,7 @@ class LinkNode(object):
                         css_class='urle')
     # intrawiki links ([[articles/irssi]])
     elif m and m.group('intern_addr'):
-      if self._inside_empty and fs.document(self._target):
+      if self._inside_empty and self._ds.contains(self._target):
         self._inside = Document(self._target).title()
       self._link = Link(document_url(self._target),
                         self._inside, css_class='urli')
@@ -265,7 +267,8 @@ class HtmlEmitter(object):
   Generate HTML output for the document
   tree consisting of DocNodes.
   '''
-  def __init__(self, root, omit_title=False, omit_summary=False):
+  def __init__(self, ds, root, omit_title=False, omit_summary=False):
+    self._ds = ds
     self._level = 0
     self.root = root
     self._omit_title = omit_title
@@ -356,7 +359,7 @@ class HtmlEmitter(object):
     inside = None
     if node.children:
       inside = self.emit_children(node)
-    return LinkNode(node, inside).to_html()
+    return LinkNode(self._ds, node, inside).to_html()
 
   def image_emit(self, node):
     # FIXME(ms): this code is really ugly.
@@ -630,13 +633,44 @@ class Documents(list):
     self.extend(flatten(Tree(root)))
 
 
+class DocumentSet(object):
+  def __init__(self, fs):
+    self._fs = fs
+    self._map = {}
+    self._fillMap()
+
+  def contains(self, name):
+    return (name in self._map)
+
+  def document(self, name):
+    if self.contains(name) is None:
+      return None
+    return Document(self, self._fs.file(name))
+
+  def list(self):
+    return sorted(self._map.keys())
+
+  def _fillMap(self):
+    def flatten(tree, m):
+      for value in tree.values():
+        if type(value) == type(tree):
+          flatten(value, m)
+        else:
+          m[value.name()] = value
+
+    fs_tree = self._fs.tree()
+    flatten(fs_tree, self._map)
+
+
 class Document(object):
-  def __init__(self, file):
+  def __init__(self, ds, file):
     '''Constructor.
 
     Args:
+      ds: DocumentSet to which this document belongs
       file: filesystem.File object
     '''
+    self._ds = ds
     self._file = file
     self._document = None
     self._structure = None
@@ -672,13 +706,14 @@ class Document(object):
   def to_html(self):
     if not self._document or not self._structure:
       self._parse()
-    emitter = HtmlEmitter(self._document, omit_title=True, omit_summary=True)
+    emitter = HtmlEmitter(self._ds, self._document,
+                          omit_title=True, omit_summary=True)
     return emitter.emit().encode('utf-8', 'ignore')
 
   def summary(self):
     if not self._structure:
       self._parse()
-    emitter = HtmlEmitter(self._structure.summary_root)
+    emitter = HtmlEmitter(self._ds, self._structure.summary_root)
     return emitter.emit().encode('utf-8', 'ignore')
 
   def toc(self):
