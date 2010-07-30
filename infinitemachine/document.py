@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import sha
 import time
 
 import creole
