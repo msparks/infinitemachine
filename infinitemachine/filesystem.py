@@ -38,53 +38,34 @@ class Tree(dict):
 
 
 class Filesystem(object):
-  def __init__(self, root=None):
+  def __init__(self, root):
     self._root = root
+    self._map = {}
+    self._fillMap()
+
+  def exists(self, name):
+    return (name in self._map)
 
   def file(self, name):
-    path = self._file_path(name)
-    if path is None:
+    if not self.exists(name):
       return None
+    return self._map[name]
 
-    return File(name, path)
+  def list(self):
+    return sorted(self._map.keys())
 
-  def tree(self, root=None):
-    if root is None:
-      root = self._root
-    if not os.path.isdir(root):
-      return None
+  def _fillMap(self):
+    def visit(_, dirname, names):
+      for name in names:
+        path = os.path.join(dirname, name)
+        path = os.path.normpath(os.path.abspath(path))
 
-    tr = Tree()
-    for filename in os.listdir(root):
-      filepath = os.path.join(root, filename)
-      if os.path.isfile(filepath) and filepath.endswith('.txt'):
-        name = os.path.normpath(os.path.join(root, filename))
-        tr[filename[:-4]] = File(name[:-4], filepath)
-      elif os.path.isdir(filepath):
-        sub_tree = self.tree(os.path.join(root, filename))
-        if sub_tree:
-          tr[filename] = sub_tree
-    return tr
+        if os.path.isfile(path):
+          name = os.path.relpath(path, self._root)
+          # Add all files to internal map, keyed by their relative path name.
+          self._map[name] = File(name, path)
 
-  def _file_path(self, name):
-    '''Get the filesystem path for a given name.
-
-    Args:
-      name: nice name for file (e.g., 'articles/irssi')
-
-    Returns:
-      filesystem path string or None
-    '''
-    name = os.path.normpath(name)
-    filename = os.path.join(self._root, name)
-
-    if os.path.exists('%s.txt' % filename):
-      filename = '%s.txt' % filename
-    elif os.path.isdir(filename) and os.path.exists('%s/index.txt' % filename):
-      filename = os.path.join(filename, 'index.txt')
-    else:
-      return None
-    return filename
+    os.path.walk(self._root, visit, None)
 
 
 class GitFilesystem(Filesystem):

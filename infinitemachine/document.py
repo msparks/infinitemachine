@@ -601,38 +601,6 @@ class StructureExtractor(object):
     self._process_node(self._root)
 
 
-class Tree(dict):
-  def __init__(self, root=None):
-    dict.__init__(self)
-    tree = fs.tree(root)
-    if not tree:
-      return
-    items = tree.items()
-    for name, obj in items:
-      if type(obj) == filesystem.Document:
-        self[name] = Document(obj.docname(), fsdoc=obj)
-      else:  # type(obj) == filesystem.Tree:
-        new_root = root or '.'
-        new_root = os.path.normpath(os.path.join(new_root, name))
-        self[name] = Tree(new_root)
-
-
-class Documents(list):
-  def __init__(self, root=None):
-    list.__init__(self)
-
-    def flatten(tree):
-      l = []
-      for elem in tree.values():
-        if type(elem) == Tree:
-          l.extend(flatten(elem))
-        else:
-          l.append(elem)
-      return l
-
-    self.extend(flatten(Tree(root)))
-
-
 class DocumentSet(object):
   def __init__(self, fs):
     self._fs = fs
@@ -643,34 +611,35 @@ class DocumentSet(object):
     return (name in self._map)
 
   def document(self, name):
-    if self.contains(name) is None:
+    if not self.contains(name):
       return None
-    return Document(self, self._fs.file(name))
+    return self._map[name]
 
   def list(self):
     return sorted(self._map.keys())
 
   def _fillMap(self):
-    def flatten(tree, m):
-      for value in tree.values():
-        if type(value) == type(tree):
-          flatten(value, m)
-        else:
-          m[value.name()] = value
+    filenames = self._fs.list()
+    for filename in filenames:
+      file = self._fs.file(filename)
+      (docname, ext) = os.path.splitext(filename)
 
-    fs_tree = self._fs.tree()
-    flatten(fs_tree, self._map)
+      # Only attempt to Documentize .txt files for now.
+      if ext == '.txt':
+        self._map[docname] = Document(self, docname, file)
 
 
 class Document(object):
-  def __init__(self, ds, file):
+  def __init__(self, ds, name, file):
     '''Constructor.
 
     Args:
       ds: DocumentSet to which this document belongs
+      name: name of document
       file: filesystem.File object
     '''
     self._ds = ds
+    self._name = name
     self._file = file
     self._document = None
     self._structure = None
@@ -693,7 +662,7 @@ class Document(object):
                   (time.time() - start))
 
   def name(self):
-    return self._file.name()
+    return self._name
 
   def title(self):
     # check local structure first

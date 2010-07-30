@@ -90,11 +90,11 @@ def writeStaticDocument(doc, dest):
   docname = doc.name()
   start = time.time()
 
-  print 'Writing %s...   ' % docname,
-
   # Create file names.
   target_file = '%s%s' % (os.path.join(dest, docname), '.html')
   temp_file = '%s~' % target_file
+
+  print '%s -> %s   ' % (docname, target_file),
 
   # Render content.
   values = {'document': doc,
