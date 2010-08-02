@@ -701,11 +701,15 @@ class Document(object):
 
   def breadcrumbs(self):
     bc = []
-    bc_split = self.name().split('/')
+    bc_split = ('/%s' % self.name()).split('/')
     for i, segment in enumerate(bc_split):
-      if segment == 'index':
-        break
-      sub_dn = '/'.join(bc_split[0:(i+1)])
-      bc_elem = (sub_dn, self.__class__(sub_dn).title())
-      bc.append(bc_elem)
+      bc_docname = '/'.join(bc_split[1:(i + 1)])
+
+      if self._ds.contains(bc_docname):
+        bc_title = self._ds.document(bc_docname).title()
+      else:
+        bc_title = bc_docname
+
+      bc.append((bc_docname, bc_title))
+
     return bc
