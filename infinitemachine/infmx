@@ -37,6 +37,11 @@ def populateDefaults(config):
   if 'server_port' not in config:
     config['server_port'] = DEFAULT_SERVER_PORT
 
+  if 'exclude' not in config:
+    config['exclude'] = set()
+  else:
+    config['exclude'] = set(config['exclude'])
+
 
 def checkDir(path, mode):
   if not os.path.isdir(path):
@@ -154,13 +159,8 @@ def copyStaticFile(file, dest):
   shutil.copy(file.name(), file_dest)
 
 
-def build(source, dest, ignore_set=None):
-  if ignore_set is None:
-    ignore_set = set()
-  ignore_set.add(os.path.relpath(dest, source))
-  print ignore_set
-
-  fs = filesystem.Filesystem(source)
+def build(source, dest, exclude):
+  fs = filesystem.Filesystem(source, exclude)
   ds = document.DocumentSet()
 
   static_files = []
@@ -168,9 +168,6 @@ def build(source, dest, ignore_set=None):
   # Separate static files from documents.
   filenames = fs.list()
   for filename in filenames:
-    if filename.split(os.sep)[0] in ignore_set:
-      continue
-
     file = fs.file(filename)
 
     if ds.isDocument(file):
@@ -189,14 +186,14 @@ def build(source, dest, ignore_set=None):
 
 
 def main():
-  # Parse arguments
+  # Parse arguments.
   (options, args) = parseArgs()
   if len(args) == 2:
     source = args[0]
   else:
     source = '.'
 
-  # Load configuration file
+  # Load configuration file.
   configPath = os.path.join(source, '_config.yml')
   try:
     config = loadConfig(configPath)
@@ -204,7 +201,7 @@ def main():
     print 'Error occurred while parsing config:\n%s' % str(e)
     sys.exit(1)
 
-  # Override config settings with commandline arguments as necessary
+  # Override config settings with commandline arguments as necessary.
   if len(args) == 1:
     config['destination'] = args[0]
   elif len(args) == 2:
@@ -214,24 +211,32 @@ def main():
   if options.port is not None:
     config['server_port'] = options.port
 
-  # Expand and normalize paths
+  # Expand and normalize paths.
   source = os.path.normpath(os.path.abspath(config['source']))
   dest = os.path.normpath(os.path.abspath(config['destination']))
 
-  # Ensure source and destination exist and have the proper permissions
+  # Ensure source and destination exist and have the proper permissions.
   if (not checkDir(source, os.R_OK | os.X_OK) or
       not checkDir(dest, os.R_OK | os.X_OK)):
     sys.exit(1)
 
-  print 'Source: %s' % source
-  print 'Destination: %s' % dest
-
-  # Set up layouts
+  # Set up layouts.
   layoutsDir = os.path.join(source, '_layouts')
   django.conf.settings.configure(TEMPLATE_DIRS=(layoutsDir,))
 
-  # Build the site
-  build(source, dest)
+  # Create exclude set. Items here are relative to the source directory.
+  exclude = config['exclude']
+  exclude.add('_config.yml')
+  exclude.add('_layouts')
+  if not os.path.relpath(dest, source).startswith(os.pardir):
+    exclude.add(os.path.relpath(dest, source))
+
+  print 'Source: %s' % source
+  print 'Destination: %s' % dest
+  print 'Exclude: %s' % str(list(exclude))
+
+  # Build the site.
+  build(source, dest, exclude)
 
   if options.server:
     address = ('localhost', config['server_port'])

@@ -23,9 +23,10 @@ class File(object):
 
 
 class Filesystem(object):
-  def __init__(self, root):
-    self._root = root
+  def __init__(self, root, exclude=None):
+    self._root = os.path.normpath(os.path.abspath(root))
     self._map = {}
+    self._exclude = exclude if exclude else set()
     self._fillMap()
 
   def exists(self, name):
@@ -41,10 +42,23 @@ class Filesystem(object):
 
   def _fillMap(self):
     def visit(_, dirname, names):
+      # Find included paths.
+      paths = []
+      bad_names = []
       for name in names:
         path = os.path.join(dirname, name)
         path = os.path.normpath(os.path.abspath(path))
 
+        if os.path.relpath(path, self._root) not in self._exclude:
+          paths.append((name, path))
+        else:
+          bad_names.append(name)
+
+      # Modify names in place to avoid walking excluded paths.
+      for name in bad_names:
+        names.remove(name)
+
+      for name, path in paths:
         if os.path.isfile(path):
           name = os.path.relpath(path, self._root)
           # Add all files to internal map, keyed by their relative path name.
