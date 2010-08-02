@@ -108,6 +108,8 @@ def targetForDocname(dest, docname):
 
 
 def writeDocument(doc, dest):
+  global config
+
   docname = doc.name()
   start = time.time()
 
@@ -118,9 +120,9 @@ def writeDocument(doc, dest):
   print '%s -> %s   ' % (docname, target_file),
 
   # Render content.
-  values = {'document': doc,
+  values = {'site': config,
+            'document': doc,
             'toplevel': docname.split('/')[0],
-            'title': doc.title(),
             'title_shortname': document.header_short_name(doc.title())}
   content = django.template.loader.render_to_string('index.html', values)
 
@@ -186,6 +188,8 @@ def build(source, dest, exclude):
 
 
 def main():
+  global config
+
   # Parse arguments.
   (options, args) = parseArgs()
   if len(args) == 2:
