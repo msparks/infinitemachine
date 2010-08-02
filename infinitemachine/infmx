@@ -86,12 +86,27 @@ def parseArgs():
   return (options, args)
 
 
+def targetForDocname(dest, docname):
+  '''Maps a document name to its target destination on disk.
+
+  Args:
+    dest: site output base path
+    docname: document name
+
+  Returns:
+    full filesystem path
+  '''
+  index = os.path.join(docname, 'index.html')
+  path = os.path.join(dest, index)
+  return path
+
+
 def writeStaticDocument(doc, dest):
   docname = doc.name()
   start = time.time()
 
   # Create file names.
-  target_file = '%s%s' % (os.path.join(dest, docname), '.html')
+  target_file = targetForDocname(dest, docname)
   temp_file = '%s~' % target_file
 
   print '%s -> %s   ' % (docname, target_file),

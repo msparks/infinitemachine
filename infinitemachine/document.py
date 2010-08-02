@@ -622,6 +622,11 @@ class DocumentSet(object):
     for filename in filenames:
       file = self._fs.file(filename)
       (docname, ext) = os.path.splitext(filename)
+      (head, tail) = os.path.split(docname)
+
+      # Documents named 'foo/index' are renamed as 'foo'
+      if tail == 'index':
+        docname = head
 
       # Only attempt to Documentize .txt files for now.
       if ext == '.txt':
