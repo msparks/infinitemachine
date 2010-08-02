@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.6
 import optparse
 import os
+import shutil
 import sys
 import time
 
@@ -101,7 +102,7 @@ def targetForDocname(dest, docname):
   return path
 
 
-def writeStaticDocument(doc, dest):
+def writeDocument(doc, dest):
   docname = doc.name()
   start = time.time()
 
@@ -141,14 +142,50 @@ def writeStaticDocument(doc, dest):
   print '%.3fs' % (time.time() - start)
 
 
-def build(source, dest):
-  fs = filesystem.Filesystem(source)
-  ds = document.DocumentSet(fs)
+def copyStaticFile(file, dest):
+  file_dest = os.path.join(dest, file.name())
+  dir, base = os.path.split(file_dest)
+  try:
+    os.makedirs(dir)
+  except OSError:
+    pass
 
-  names = ds.list()
-  for name in names:
+  print '%s -> %s' % (file.name(), file_dest)
+  shutil.copy(file.name(), file_dest)
+
+
+def build(source, dest, ignore_set=None):
+  if ignore_set is None:
+    ignore_set = set()
+  ignore_set.add(os.path.relpath(dest, source))
+  print ignore_set
+
+  fs = filesystem.Filesystem(source)
+  ds = document.DocumentSet()
+
+  static_files = []
+
+  # Separate static files from documents.
+  filenames = fs.list()
+  for filename in filenames:
+    if filename.split(os.sep)[0] in ignore_set:
+      continue
+
+    file = fs.file(filename)
+
+    if ds.isDocument(file):
+      ds.documentNew(file)
+    else:
+      static_files.append(file)
+
+  # Compile documents.
+  for name in ds.list():
     doc = ds.document(name)
-    writeStaticDocument(doc, dest)
+    writeDocument(doc, dest)
+
+  # Copy static files.
+  for file in static_files:
+    copyStaticFile(file, dest)
 
 
 def main():

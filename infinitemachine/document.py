@@ -601,10 +601,8 @@ class StructureExtractor(object):
 
 
 class DocumentSet(object):
-  def __init__(self, fs):
-    self._fs = fs
+  def __init__(self):
     self._map = {}
-    self._fillMap()
 
   def contains(self, name):
     return (name in self._map)
@@ -617,20 +615,27 @@ class DocumentSet(object):
   def list(self):
     return sorted(self._map.keys())
 
-  def _fillMap(self):
-    filenames = self._fs.list()
-    for filename in filenames:
-      file = self._fs.file(filename)
-      (docname, ext) = os.path.splitext(filename)
-      (head, tail) = os.path.split(docname)
+  def isDocument(self, file):
+    '''Returns true if the given file is a document.'''
+    _, ext = os.path.splitext(file.name())
+    if ext == '.txt':
+      return True
+    return False
 
-      # Documents named 'foo/index' are renamed as 'foo'
-      if tail == 'index':
-        docname = head
+  def documentNew(self, file):
+    '''Create a new document from the given file and add it to the set.'''
+    if not self.isDocument(file):
+      return
+    docname, ext = os.path.splitext(file.name())
+    head, tail = os.path.split(docname)
 
-      # Only attempt to Documentize .txt files for now.
-      if ext == '.txt':
-        self._map[docname] = Document(self, docname, file)
+    # Documents named 'foo/index' are renamed as 'foo'
+    if tail == 'index':
+      docname = head
+
+    doc = Document(self, docname, file)
+    self._map[docname] = doc
+    return doc
 
 
 class Document(object):
