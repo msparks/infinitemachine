@@ -188,7 +188,7 @@ class LinkNode(object):
     # intrawiki links ([[articles/irssi]])
     elif m and m.group('intern_addr'):
       if self._inside_empty and self._ds.contains(self._target):
-        self._inside = Document(self._target).title()
+        self._inside = self._ds.document(self._target).title()
       self._link = Link(document_url(self._target),
                         self._inside, css_class='urli')
     # interwiki links ([[wp>Python]])
