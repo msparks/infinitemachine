@@ -701,7 +701,13 @@ class Document(object):
 
   def breadcrumbs(self):
     bc = []
-    bc_split = ('/%s' % self.name()).split('/')
+
+    name = self.name()
+    if name != '':
+      name = '/%s' % name
+
+    bc_split = name.split('/')
+
     for i, segment in enumerate(bc_split):
       bc_docname = '/'.join(bc_split[1:(i + 1)])
 
