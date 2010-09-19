@@ -213,7 +213,10 @@ def main():
     config['destination'] = args[1]
 
   if options.port is not None:
-    config['server_port'] = options.port
+    try:
+      config['server_port'] = int(options.port)
+    except ValueError:
+      pass  # keep default port
 
   # Expand and normalize paths.
   source = os.path.normpath(os.path.abspath(config['source']))
