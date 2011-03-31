@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.6
+# -*- mode: Python -*-
 import optparse
 import os
 import shutil
